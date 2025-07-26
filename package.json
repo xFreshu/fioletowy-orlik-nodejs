@@ -1,0 +1,39 @@
+{
+  "name": "twitch-api-streamer-app",
+  "version": "1.0.0",
+  "description": "Aplikacja do pobierania danych streamerów z Twitch API",
+  "main": "dist/index.js",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx watch src/index.ts",
+    "dev:nodemon": "nodemon --exec tsx src/index.ts",
+    "start": "node dist/index.js",
+    "clean": "rm -rf dist",
+    "test": "tsx src/test.ts",
+    "lint": "echo 'No linting configured yet'",
+    "setup": "npm install && npm run build"
+  },
+  "keywords": [
+    "twitch",
+    "api",
+    "streaming",
+    "nodejs",
+    "typescript"
+  ],
+  "author": "Twoja nazwa",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^1.6.2",
+    "dotenv": "^16.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.5",
+    "nodemon": "^3.1.10",
+    "tsx": "^4.6.2",
+    "typescript": "^5.3.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
