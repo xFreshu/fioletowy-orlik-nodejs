@@ -3,14 +3,14 @@
  */
 
 import axios, { AxiosResponse } from 'axios';
-import logger from '../config/logger';
+import logger from '../config/logger.js';
 import {
     TwitchTokenResponse,
     TwitchUsersResponse,
     TwitchStreamsResponse,
     StreamerInfo,
     TwitchApiError,
-} from '../types/types';
+} from '../types/types.js';
 
 export class TwitchService {
     private readonly clientId: string;
@@ -96,37 +96,57 @@ export class TwitchService {
 
         logger.info(`Fetching data for ${logins.length} streamers...`);
 
+        const BATCH_SIZE = 100; // Twitch API limit for users and streams endpoints
+        const allStreamerInfo: StreamerInfo[] = [];
+
         try {
             const headers = await this.getAuthHeaders();
 
-            // Twitch API allows fetching up to 100 users/streams at a time
-            const usersResponse = await axios.get<TwitchUsersResponse>(
-                `${this.HELIX_BASE_URL}/users`,
-                { headers, params: { login: logins } }
-            );
+            for (let i = 0; i < logins.length; i += BATCH_SIZE) {
+                const batch = logins.slice(i, i + BATCH_SIZE);
+                logger.info(`Processing batch ${Math.floor(i / BATCH_SIZE) + 1}/${Math.ceil(logins.length / BATCH_SIZE)} (${batch.length} streamers)...`);
 
-            const streamsResponse = await axios.get<TwitchStreamsResponse>(
-                `${this.HELIX_BASE_URL}/streams`,
-                { headers, params: { user_login: logins } }
-            );
+                // Make parallel requests for users and streams in the current batch
+                const [usersResponse, streamsResponse] = await Promise.all([
+                    axios.get<TwitchUsersResponse>(
+                        `${this.HELIX_BASE_URL}/users`,
+                        { headers, params: { login: batch } }
+                    ),
+                    axios.get<TwitchStreamsResponse>(
+                        `${this.HELIX_BASE_URL}/streams`,
+                        { headers, params: { user_login: batch } }
+                    ),
+                ]);
 
-            const users = usersResponse.data.data;
-            const streamsMap = new Map(streamsResponse.data.data.map(s => [s.user_login.toLowerCase(), s]));
+                const users = usersResponse.data.data;
+                const streamsMap = new Map(streamsResponse.data.data.map(s => [s.user_login.toLowerCase(), s]));
 
-            const streamerInfo = users.map(user => {
-                const stream = streamsMap.get(user.login.toLowerCase());
-                return {
-                    displayName: user.display_name,
-                    login: user.login,
-                    isLive: !!stream,
-                    viewers: stream ? stream.viewer_count : null,
-                    title: stream ? stream.title : null,
-                    gameName: stream ? stream.game_name : null,
-                };
-            });
+                const batchStreamerInfo = users.map(user => {
+                    const stream = streamsMap.get(user.login.toLowerCase());
+                    return {
+                        displayName: user.display_name,
+                        login: user.login,
+                        isLive: !!stream,
+                        viewers: stream ? stream.viewer_count : null,
+                        title: stream ? stream.title : null,
+                        gameName: stream ? stream.game_name : null,
+                        viewCount: user.view_count,
+                        broadcasterType: user.broadcaster_type,
+                        createdAt: new Date(user.created_at),
+                    } as StreamerInfo;
+                });
 
-            logger.info(`Successfully fetched data for ${streamerInfo.length} streamers.`);
-            return streamerInfo;
+                allStreamerInfo.push(...batchStreamerInfo);
+
+                // Add a small delay between batches to avoid hitting rate limits too aggressively
+                if (i + BATCH_SIZE < logins.length) {
+                    logger.info('Waiting for 1 second before next batch...');
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                }
+            }
+
+            logger.info(`Successfully fetched data for ${allStreamerInfo.length} streamers.`);
+            return allStreamerInfo;
 
         } catch (error) {
             logger.error('An error occurred while fetching data from Twitch.', error);

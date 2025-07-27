@@ -4,9 +4,9 @@
  */
 
 import { config as loadEnv } from 'dotenv';
-import { AppConfig, DatabaseConfig, ConfigurationError } from '../types/types';
 import { Pool } from 'pg';
-import logger from './logger';
+import { AppConfig, DatabaseConfig, ConfigurationError } from '../types/types.js';
+import logger from './logger.js';
 
 // Load environment variables from .env file
 loadEnv();

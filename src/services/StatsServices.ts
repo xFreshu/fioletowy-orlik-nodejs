@@ -2,8 +2,8 @@
  * Service for calculating streamer statistics.
  */
 
-import { StreamerInfo, AppStatistics } from '../types/types';
-import logger from '../config/logger';
+import { StreamerInfo, AppStatistics } from '../types/types.js';
+import logger from '../config/logger.js';
 
 export class StatsService {
     /**
