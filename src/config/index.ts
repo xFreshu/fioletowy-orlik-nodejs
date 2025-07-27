@@ -1,80 +1,101 @@
 /**
- * Konfiguracja aplikacji
+ * Application configuration module.
+ * Handles loading of environment variables and application settings.
  */
 
 import { config as loadEnv } from 'dotenv';
-import { promises as fs } from 'fs';
-import { join } from 'path';
-import { AppConfig, ConfigurationError } from '../types/types';
+import { AppConfig, DatabaseConfig, ConfigurationError } from '../types/types';
+import { Pool } from 'pg';
+import logger from './logger';
 
-// Załaduj zmienne środowiskowe
+// Load environment variables from .env file
 loadEnv();
 
 /**
- * Ładuje listę streamerów z pliku JSON
+ * Loads the list of streamers to check from the database.
+ * This function connects to the PostgreSQL database and queries the 'streamers' table.
+ * If the database connection fails or no streamers are found, it logs a warning and returns an empty array.
+ * @param dbConfig The database configuration object.
+ * @returns A promise that resolves to an array of streamer Twitch nicknames (strings).
  */
-async function loadStreamers(): Promise<string[]> {
+async function loadStreamers(dbConfig: DatabaseConfig): Promise<string[]> {
+    const pool = new Pool(dbConfig);
     try {
-        const streamersPath = join(process.cwd(), 'streamers.json');
-        const fileContent = await fs.readFile(streamersPath, 'utf-8');
-        const streamers = JSON.parse(fileContent);
-        return streamers.map((s: any) => s.twitchNick);
+        logger.info('Connecting to the database to fetch streamers...');
+        const result = await pool.query('SELECT "TwitchNickname" FROM streamers');
+        logger.info(`Found ${result.rows.length} streamers in the database.`);
+        return result.rows.map((row: any) => row.TwitchNickname);
     } catch (error) {
-        console.warn('⚠️  Could not load streamers.json, using default list');
-        return ['overpow', 'ninja', 'shroud'];
+        logger.error('Error loading streamers from database:', error);
+        logger.warn('Falling back to an empty list of streamers.');
+        return [];
+    } finally {
+        await pool.end();
+        logger.info('Database connection closed.');
     }
 }
 
 /**
- * Waliduje i zwraca konfigurację aplikacji
+ * Validates and returns the application configuration.
+ * This function reads environment variables for Twitch API credentials and database settings.
+ * It throws a ConfigurationError if essential environment variables are missing or invalid.
+ * It also loads the list of streamers from the database.
+ * @returns A promise that resolves to the application configuration object (AppConfig).
+ * @throws {ConfigurationError} If required environment variables are not set or are invalid.
  */
 export async function getConfig(): Promise<AppConfig> {
     const twitchClientId = process.env.TWITCH_CLIENT_ID;
     const twitchClientSecret = process.env.TWITCH_CLIENT_SECRET;
-    const logLevel = process.env.LOG_LEVEL as AppConfig['logLevel'] || 'info';
+    const logLevel = (process.env.LOG_LEVEL as AppConfig['logLevel']) || 'info';
 
-    // Walidacja wymaganych zmiennych
-    if (!twitchClientId) {
+    // Validate required Twitch API credentials
+    if (!twitchClientId || twitchClientId === '<your_twitch_client_id>') {
         throw new ConfigurationError(
-            'TWITCH_CLIENT_ID is required. Get it from https://dev.twitch.tv/console/apps'
+            'TWITCH_CLIENT_ID is not configured. Please set it in your .env file.'
         );
     }
 
-    if (!twitchClientSecret) {
+    if (!twitchClientSecret || twitchClientSecret === '<your_twitch_client_secret>') {
         throw new ConfigurationError(
-            'TWITCH_CLIENT_SECRET is required. Get it from https://dev.twitch.tv/console/apps'
+            'TWITCH_CLIENT_SECRET is not configured. Please set it in your .env file.'
         );
     }
 
-    if (twitchClientId.length < 10) {
-        throw new ConfigurationError('TWITCH_CLIENT_ID seems invalid (too short)');
-    }
+    // Database configuration
+    const dbConfig: DatabaseConfig = {
+        host: process.env.DB_HOST || 'localhost',
+        port: Number(process.env.DB_PORT) || 5432,
+        user: process.env.DB_USER,
+        password: process.env.DB_PASSWORD,
+        database: process.env.DB_NAME,
+    };
 
-    if (twitchClientSecret.length < 10) {
-        throw new ConfigurationError('TWITCH_CLIENT_SECRET seems invalid (too short)');
-    }
-
-    const streamersToCheck = await loadStreamers();
+    const streamersToCheck = await loadStreamers(dbConfig);
 
     return {
         twitch: {
             clientId: twitchClientId,
             clientSecret: twitchClientSecret,
         },
+        db: dbConfig,
         streamersToCheck,
         logLevel,
     };
 }
 
 /**
- * Sprawdza czy jesteśmy w trybie development
+ * Checks if the application is running in development mode.
+ * This is determined by the NODE_ENV environment variable.
+ * @returns {boolean} True if NODE_ENV is 'development', false otherwise.
  */
 export function isDevelopment(): boolean {
     return process.env.NODE_ENV === 'development';
 }
 
 /**
- * Sprawdza czy jesteśmy w trybie production
+ * Checks if the application is running in production mode.
+ * This is determined by the NODE_ENV environment variable.
+ * @returns {boolean} True if NODE_ENV is 'production', false otherwise.
  */
 export function isProduction(): boolean {
     return process.env.NODE_ENV === 'production';

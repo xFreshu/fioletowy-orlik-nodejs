@@ -1,5 +1,5 @@
 /**
- * Typy dla Twitch API i aplikacji
+ * Type definitions for the Twitch API and the application.
  */
 
 // ========== TWITCH API TYPES ==========
@@ -54,30 +54,26 @@ export interface TwitchStreamsResponse {
 // ========== APPLICATION TYPES ==========
 
 export interface StreamerInfo {
-    // Basic user info
-    id: string;
-    login: string;
+    id?: string; // Optional, as it might not always be needed for display
     displayName: string;
-    description: string;
-    profileImageUrl: string;
-    viewCount: number;
-    broadcasterType: string;
-    createdAt: Date;
-
-    // Stream status
+    login: string;
     isLive: boolean;
-    streamData?: {
-        title: string;
-        gameName: string;
-        viewerCount: number;
-        startedAt: Date;
-        thumbnailUrl: string;
-        language: string;
-    };
+    viewers: number | null;
+    title: string | null;
+    gameName: string | null;
+    viewCount?: number; // Total views for the channel
+    broadcasterType?: string; // e.g., 'partner', 'affiliate'
+    createdAt?: Date; // Account creation date
+    accountAgeDays?: number; // Calculated field
+    streamDurationMinutes?: number; // Calculated field for live streams
+}
 
-    // Calculated fields
-    accountAgeDays: number;
-    streamDurationMinutes?: number;
+export interface DatabaseConfig {
+    host: string;
+    port: number;
+    user?: string;
+    password?: string;
+    database?: string;
 }
 
 export interface AppConfig {
@@ -85,6 +81,7 @@ export interface AppConfig {
         clientId: string;
         clientSecret: string;
     };
+    db: DatabaseConfig;
     streamersToCheck: string[];
     logLevel: 'debug' | 'info' | 'warn' | 'error';
 }
@@ -97,7 +94,7 @@ export interface AppStatistics {
     totalViews: number;
     averageViews: number;
     topStreamers: StreamerInfo[];
-    liveStreamersData: StreamerInfo[]; // Dodane pole
+    liveStreamersData: StreamerInfo[];
     popularGames: { game: string; count: number }[];
     totalLiveViewers: number;
 }

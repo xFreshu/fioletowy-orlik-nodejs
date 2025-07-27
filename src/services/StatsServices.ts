@@ -1,13 +1,15 @@
 /**
- * Serwis do obliczania statystyk streamerów
+ * Service for calculating streamer statistics.
  */
 
 import { StreamerInfo, AppStatistics } from '../types/types';
-import { logger } from '../utils/logger.js';
+import logger from '../config/logger';
 
 export class StatsService {
     /**
-     * Oblicza kompletne statystyki dla listy streamerów
+     * Calculates comprehensive statistics for a list of streamers.
+     * @param streamers An array of StreamerInfo objects.
+     * @returns An AppStatistics object containing various calculated metrics.
      */
     calculateStatistics(streamers: StreamerInfo[]): AppStatistics {
         logger.info('📊 Calculating statistics...');
@@ -17,21 +19,23 @@ export class StatsService {
         const partners = streamers.filter(s => s.broadcasterType === 'partner');
         const affiliates = streamers.filter(s => s.broadcasterType === 'affiliate');
 
-        const totalViews = streamers.reduce((sum, s) => sum + s.viewCount, 0);
-        const averageViews = totalViews / totalStreamers;
+        const totalViews = streamers.reduce((sum, s) => sum + (s.viewCount || 0), 0);
+        const averageViews = totalStreamers > 0 ? totalViews / totalStreamers : 0;
 
-        // Top streamers po view count
+        // Top streamers by view count
         const topStreamers = [...streamers]
-            .sort((a, b) => b.viewCount - a.viewCount)
+            .filter(s => s.viewCount !== undefined && s.viewCount !== null)
+            .sort((a, b) => (b.viewCount || 0) - (a.viewCount || 0))
             .slice(0, 5);
 
-        // Live streamers posortowani po viewer count
+        // Live streamers sorted by viewer count
         const sortedLiveStreamers = liveStreamers
-            .sort((a, b) => (b.streamData?.viewerCount || 0) - (a.streamData?.viewerCount || 0));
+            .filter(s => s.viewers !== null)
+            .sort((a, b) => (b.viewers || 0) - (a.viewers || 0));
 
-        // Popularne gry wśród live streamów
+        // Popular games among live streams
         const gameFrequency = liveStreamers.reduce((acc, streamer) => {
-            const game = streamer.streamData?.gameName;
+            const game = streamer.gameName;
             if (game) {
                 acc[game] = (acc[game] || 0) + 1;
             }
@@ -41,11 +45,11 @@ export class StatsService {
         const popularGames = Object.entries(gameFrequency)
             .sort(([, a], [, b]) => b - a)
             .slice(0, 5)
-            .map(([game, count]) => ({game, count}));
+            .map(([game, count]) => ({ game, count }));
 
-        // Łączni widzowie live streamów
+        // Total live viewers
         const totalLiveViewers = liveStreamers.reduce(
-            (sum, s) => sum + (s.streamData?.viewerCount || 0),
+            (sum, s) => sum + (s.viewers || 0),
             0
         );
 
@@ -62,7 +66,7 @@ export class StatsService {
             totalLiveViewers,
         };
 
-        logger.success(`Statistics calculated for ${totalStreamers} streamers`);
+        logger.info(`Statistics calculated for ${totalStreamers} streamers`);
         logger.debug('Stats summary:', {
             total: totalStreamers,
             live: liveStreamers.length,
@@ -76,33 +80,35 @@ export class StatsService {
     }
 
     /**
-     * Formatuje statystyki jako tekst
+     * Formats statistics as text for console output.
+     * @param stats The AppStatistics object to format.
+     * @returns A string representation of the statistics.
      */
     formatStatisticsAsText(stats: AppStatistics): string {
         const lines = [
-            '📊 STATYSTYKI STREAMERÓW',
+            '📊 STREAMER STATISTICS',
             '='.repeat(30),
-            `👥 Łącznie: ${stats.totalStreamers}`,
+            `👥 Total Streamers: ${stats.totalStreamers}`,
             `🔴 Live: ${stats.liveStreamers} (${Math.round(stats.liveStreamers / stats.totalStreamers * 100)}%)`,
-            `⭐ Partnerzy: ${stats.partners}`,
-            `🤝 Afiliowani: ${stats.affiliates}`,
-            `📈 Łączne wyświetlenia: ${stats.totalViews.toLocaleString('pl-PL')}`,
-            `📊 Średnie wyświetlenia: ${Math.round(stats.averageViews).toLocaleString('pl-PL')}`,
-            `📺 Łączni widzowie live: ${stats.totalLiveViewers.toLocaleString('pl-PL')}`,
+            `⭐ Partners: ${stats.partners}`,
+            `🤝 Affiliates: ${stats.affiliates}`,
+            `📈 Total Views: ${stats.totalViews.toLocaleString('en-US')}`,
+            `📊 Average Views: ${Math.round(stats.averageViews).toLocaleString('en-US')}`,
+            `📺 Total Live Viewers: ${stats.totalLiveViewers.toLocaleString('en-US')}`,
         ];
 
         if (stats.topStreamers.length > 0) {
-            lines.push('', '🏆 TOP STREAMERS:');
+            lines.push('', '🏆 TOP STREAMERS (by views):');
             stats.topStreamers.forEach((streamer, i) => {
                 const status = streamer.isLive ? '🔴' : '⚫';
-                lines.push(`${i + 1}. ${status} ${streamer.displayName}: ${streamer.viewCount.toLocaleString('pl-PL')}`);
+                lines.push(`${i + 1}. ${status} ${streamer.displayName}: ${(streamer.viewCount || 0).toLocaleString('en-US')}`);
             });
         }
 
         if (stats.popularGames.length > 0) {
-            lines.push('', '🎮 POPULARNE GRY:');
-            stats.popularGames.forEach(({game, count}) => {
-                lines.push(`• ${game}: ${count} ${count === 1 ? 'streamer' : 'streamerów'}`);
+            lines.push('', '🎮 MOST POPULAR GAMES (live):');
+            stats.popularGames.forEach(({ game, count }) => {
+                lines.push(`• ${game}: ${count} ${count === 1 ? 'streamer' : 'streamers'}`);
             });
         }
 
@@ -110,26 +116,35 @@ export class StatsService {
     }
 
     /**
-     * Znajduje najdłużej streamujących
+     * Finds the longest streaming channels.
+     * @param streamers An array of StreamerInfo objects.
+     * @param limit The maximum number of streamers to return.
+     * @returns An array of StreamerInfo objects, sorted by stream duration.
      */
     getLongestStreamers(streamers: StreamerInfo[], limit: number = 5): StreamerInfo[] {
         return streamers
-            .filter(s => s.isLive && s.streamDurationMinutes)
+            .filter(s => s.isLive && s.streamDurationMinutes !== undefined && s.streamDurationMinutes !== null)
             .sort((a, b) => (b.streamDurationMinutes || 0) - (a.streamDurationMinutes || 0))
             .slice(0, limit);
     }
 
     /**
-     * Znajduje najstarsze konta
+     * Finds the oldest accounts.
+     * @param streamers An array of StreamerInfo objects.
+     * @param limit The maximum number of accounts to return.
+     * @returns An array of StreamerInfo objects, sorted by account age.
      */
     getOldestAccounts(streamers: StreamerInfo[], limit: number = 5): StreamerInfo[] {
         return [...streamers]
-            .sort((a, b) => b.accountAgeDays - a.accountAgeDays)
+            .filter(s => s.accountAgeDays !== undefined && s.accountAgeDays !== null)
+            .sort((a, b) => (b.accountAgeDays || 0) - (a.accountAgeDays || 0))
             .slice(0, limit);
     }
 
     /**
-     * Grupuje streamerów po typie konta
+     * Groups streamers by their broadcaster type.
+     * @param streamers An array of StreamerInfo objects.
+     * @returns An object where keys are broadcaster types and values are arrays of StreamerInfo.
      */
     groupByBroadcasterType(streamers: StreamerInfo[]): Record<string, StreamerInfo[]> {
         return streamers.reduce((groups, streamer) => {
