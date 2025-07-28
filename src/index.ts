@@ -43,7 +43,11 @@ class TwitchStreamerApp {
             return [];
         }
 
-        return streamerInfo;
+        const liveStreamers = streamerInfo.filter(streamer => streamer.isLive);
+
+        liveStreamers.sort((a, b) => (b.viewers || 0) - (a.viewers || 0));
+
+        return liveStreamers;
     }
 }
 
