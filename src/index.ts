@@ -1,8 +1,8 @@
 import express, { Application } from 'express';
 import logger from './config/logger.js';
+import { getConfig } from './config';
 import twitchRoutes from './routes/twitchRoutes.js';
 import { errorHandler } from './middleware/errorHandler.js';
-import { getConfig } from './config/index.js';
 import swaggerUi from 'swagger-ui-express';
 import fs from 'fs';
 import path from 'path';
@@ -15,7 +15,7 @@ const PORT = process.env.PORT || 3000;
 
 function bootstrap() {
     const app: Application = express();
-    const config = getConfig();
+    const config = getConfig(); // Get the config on startup
 
     logger.level = config.logLevel;
 
@@ -23,9 +23,14 @@ function bootstrap() {
 
     // Swagger UI - only in development
     if (process.env.NODE_ENV !== 'production') {
-                const swaggerFile = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../swagger-output.json'), 'utf-8'));
-        app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerFile));
-        logger.info('Swagger UI is available at http://localhost:3000/api-docs');
+        const swaggerFilePath = path.resolve(__dirname, '../swagger-output.json');
+        if (fs.existsSync(swaggerFilePath)) {
+            const swaggerFile = JSON.parse(fs.readFileSync(swaggerFilePath, 'utf-8'));
+            app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerFile));
+            logger.info(`Swagger UI is available at http://localhost:${PORT}/api-docs`);
+        } else {
+            logger.warn('swagger-output.json not found. Run "npm run swagger-gen" to generate it.');
+        }
     }
 
     app.use('/api', twitchRoutes);
@@ -36,6 +41,7 @@ function bootstrap() {
         logger.info(`Server is running on port ${PORT}`);
         logger.info(`Access all streamer data at http://localhost:${PORT}/api/twitchStreamers`);
         logger.info(`Access live streamer data at http://localhost:${PORT}/api/liveStreamers`);
+        logger.info(`Verify loaded streamers at http://localhost:${PORT}/api/config/streamers`);
     });
 }
 
