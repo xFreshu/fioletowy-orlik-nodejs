@@ -1,6 +1,6 @@
 import { Pool, QueryResult } from 'pg';
 import logger from '../config/logger.js';
-import { getConfig } from '../config';
+import { getConfig } from '../config/index.js';
 
 export class DatabaseService {
     private pool: Pool;

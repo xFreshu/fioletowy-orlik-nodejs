@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { TwitchController } from '../controllers/TwitchController.js';
 import { TwitchService } from '../services/TwitchServices.js';
 import { DatabaseService } from '../services/DatabaseService.js';
-import { getConfig } from '../config';
+import { getConfig } from '../config/index.js';
 import logger from '../config/logger.js';
 
 const router = Router();
