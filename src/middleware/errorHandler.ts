@@ -1,8 +1,8 @@
-import { Request, Response } from 'express';
+import { NextFunction, Request, Response } from 'express';
 import logger from '../config/logger.js';
 import { TwitchApiError } from '../types/types.js';
 
-export const errorHandler = (err: Error, req: Request, res: Response) => {
+export const errorHandler = (err: Error, req: Request, res: Response, next: NextFunction) => {
     logger.error(err.stack);
 
     if (err instanceof TwitchApiError) {
