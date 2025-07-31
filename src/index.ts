@@ -1,6 +1,6 @@
 import express, { Application } from 'express';
 import logger from './config/logger.js';
-import { getConfig } from './config';
+import { getConfig } from './config/index.js';
 import twitchRoutes from './routes/twitchRoutes.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import swaggerUi from 'swagger-ui-express';
