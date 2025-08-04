@@ -57,6 +57,7 @@ export interface StreamerInfo {
     id?: string; // Optional, as it might not always be needed for display
     displayName: string;
     login: string;
+    avatar: string;
     isLive: boolean;
     viewers: number | null;
     title: string | null;

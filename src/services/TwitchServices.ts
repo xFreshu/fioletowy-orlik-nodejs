@@ -85,6 +85,7 @@ export class TwitchService {
                     return {
                         displayName: user.display_name,
                         login: user.login,
+                        avatar: user.profile_image_url,
                         isLive: !!stream,
                         viewers: stream ? stream.viewer_count : null,
                         title: stream ? stream.title : null,

@@ -1,17 +1,25 @@
 import { Request, Response } from 'express';
 import { TwitchService } from '../services/TwitchServices.js';
+import { DatabaseService } from '../services/DatabaseService.js';
 
 export class TwitchController {
     private readonly twitchService: TwitchService;
+    private readonly databaseService: DatabaseService;
     private readonly streamersToCheck: string[];
 
-    constructor(twitchService: TwitchService, streamersToCheck: string[]) {
+    constructor(twitchService: TwitchService, databaseService: DatabaseService, streamersToCheck: string[]) {
         this.twitchService = twitchService;
+        this.databaseService = databaseService;
         this.streamersToCheck = streamersToCheck;
     }
 
     public getAllStreamers = async (req: Request, res: Response): Promise<void> => {
         const streamers = await this.twitchService.getStreamersInfo(this.streamersToCheck);
+        for (const streamer of streamers) {
+            if (streamer.avatar) {
+                await this.databaseService.updateStreamerAvatar(streamer.login, streamer.avatar);
+            }
+        }
         res.status(200).json(streamers);
     };
 
@@ -24,5 +32,25 @@ export class TwitchController {
 
     public getStreamersFromConfig = (req: Request, res: Response): void => {
         res.status(200).json({ streamers_from_config: this.streamersToCheck });
+    };
+
+    public getStreamer = async (req: Request, res: Response): Promise<void> => {
+        const { login } = req.params;
+        if (!login) {
+            res.status(400).json({ error: 'Streamer login is required' });
+            return;
+        }
+
+        const streamerInfo = await this.twitchService.getStreamersInfo([login]);
+        const streamer = streamerInfo[0];
+
+        if (streamer) {
+            if (streamer.avatar) {
+                await this.databaseService.updateStreamerAvatar(streamer.login, streamer.avatar);
+            }
+            res.status(200).json(streamer);
+        } else {
+            res.status(404).json({ error: 'Streamer not found' });
+        }
     };
 }

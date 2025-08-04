@@ -44,6 +44,17 @@ export class DatabaseService {
         }
     }
 
+    public async updateStreamerAvatar(login: string, avatarUrl: string): Promise<void> {
+        const tableName = 'streamers';
+        const query = `UPDATE ${tableName} SET "Avatar" = $1 WHERE LOWER("TwitchNickname") = LOWER($2)`;
+        try {
+            await this.pool.query(query, [avatarUrl, login]);
+            logger.info(`Successfully updated avatar for streamer: ${login}`);
+        } catch (error) {
+            logger.error(`Error updating avatar for streamer: ${login}`, error);
+        }
+    }
+
     public async disconnect(): Promise<void> {
         await this.pool.end();
         logger.info('Database pool has been closed.');

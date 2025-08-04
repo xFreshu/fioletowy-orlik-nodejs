@@ -21,12 +21,13 @@ async function initializeRoutes() {
         const streamersFromDb = await databaseService.getStreamerLogins();
 
         // Inject dependencies into the controller
-        const twitchController = new TwitchController(twitchService, streamersFromDb);
+        const twitchController = new TwitchController(twitchService, databaseService, streamersFromDb);
 
         // Set up routes
         router.get('/twitchStreamers', twitchController.getAllStreamers);
         router.get('/liveStreamers', twitchController.getLiveStreamers);
         router.get('/config/streamers', twitchController.getStreamersFromConfig);
+        router.get('/streamer/:login', twitchController.getStreamer);
 
         logger.info('Twitch routes initialized successfully.');
 
