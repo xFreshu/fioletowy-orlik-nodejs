@@ -17,6 +17,7 @@ export interface TwitchUser {
     type: '' | 'admin' | 'global_mod' | 'staff';
     broadcaster_type: '' | 'affiliate' | 'partner';
     description: string;
+    avatar: string;
     profile_image_url: string;
     offline_image_url: string;
     view_count: number;
