@@ -63,6 +63,8 @@ export interface StreamerInfo {
     viewers: number | null;
     title: string | null;
     gameName: string | null;
+    platform: 'twitch' | 'kick';
+    platformUrl: string;
     viewCount?: number; // Total views for the channel
     broadcasterType?: string; // e.g., 'partner', 'affiliate'
     createdAt?: Date; // Account creation date

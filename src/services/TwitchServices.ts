@@ -82,6 +82,8 @@ export class TwitchService {
 
                 const batchStreamerInfo = users.map(user => {
                     const stream = streamsMap.get(user.login.toLowerCase());
+                    const platform: "twitch" | "kick" = stream ? 'twitch' : 'kick';
+                    const platformUrl = stream ? 'www.twitch.tv' : 'www.kick.com';
                     return {
                         displayName: user.display_name,
                         login: user.login,
@@ -90,6 +92,8 @@ export class TwitchService {
                         viewers: stream ? stream.viewer_count : null,
                         title: stream ? stream.title : null,
                         gameName: stream ? stream.game_name : null,
+                        platform: platform,
+                        platformUrl: platformUrl,
                         viewCount: user.view_count,
                         broadcasterType: user.broadcaster_type,
                         createdAt: new Date(user.created_at),
