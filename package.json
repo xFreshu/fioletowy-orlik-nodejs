@@ -5,9 +5,9 @@
   "main": "dist/index.js",
   "type": "module",
   "scripts": {
-    "build": "tsc",
-    "dev": "tsx watch src/index.ts",
-    "start": "node dist/index.js",
+    "build-nodejs": "tsc",
+    "dev-nodejs": "tsx watch src/index.ts",
+    "start-nodejs": "node dist/index.js",
     "swagger-gen": "node ./swagger.config.js",
     "clean": "rm -rf dist",
     "test": "echo \"No tests configured yet\"",
