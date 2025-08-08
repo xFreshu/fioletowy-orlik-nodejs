@@ -5,15 +5,15 @@
   "main": "dist/index.js",
   "type": "module",
   "scripts": {
-    "build-nodejs": "tsc",
-    "dev-nodejs": "tsx watch src/index.ts",
-    "start-nodejs": "node dist/index.js",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsx watch src/index.ts",
     "swagger-gen": "node ./swagger.config.js",
     "clean": "rm -rf dist",
     "test": "echo \"No tests configured yet\"",
     "lint": "eslint \"src/**/*.ts\"",
     "lint:fix": "eslint \"src/**/*.ts\" --fix",
-    "setup": "npm install && npm run build"
+    "setup": "npm install && npm run build-nodejs"
   },
   "keywords": [
     "twitch",

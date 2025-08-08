@@ -1,4 +1,5 @@
 import express, { Application } from 'express';
+import dotenv from 'dotenv';
 import logger from './config/logger.js';
 import { getConfig } from './config/index.js';
 import twitchRoutes from './routes/twitchRoutes.js';
@@ -7,6 +8,9 @@ import swaggerUi from 'swagger-ui-express';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+
+dotenv.config();
+
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -38,6 +42,7 @@ function bootstrap() {
     app.use(errorHandler);
 
     app.listen(PORT, () => {
+        console.log('!!! TEST: Serwer nasłuchuje. Kod dotarł do tego miejsca. !!!');
         logger.info(`Server is running on port ${PORT}`);
         logger.info(`Access all streamer data at http://localhost:${PORT}/api/twitchStreamers`);
         logger.info(`Access live streamer data at http://localhost:${PORT}/api/liveStreamers`);

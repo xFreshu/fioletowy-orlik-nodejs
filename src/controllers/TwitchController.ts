@@ -5,17 +5,15 @@ import { DatabaseService } from '../services/DatabaseService.js';
 export class TwitchController {
     private readonly twitchService: TwitchService;
     private readonly databaseService: DatabaseService;
-    private readonly streamersToCheck: string[];
 
-    constructor(twitchService: TwitchService, databaseService: DatabaseService, streamersToCheck: string[]) {
+    constructor(twitchService: TwitchService, databaseService: DatabaseService) {
         this.twitchService = twitchService;
         this.databaseService = databaseService;
-        this.streamersToCheck = streamersToCheck;
     }
 
     public getAllStreamers = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
         try {
-            const streamers = await this.twitchService.getStreamersInfo(this.streamersToCheck);
+            const streamers = await this.twitchService.getStreamersInfo(await this.databaseService.getStreamerLogins());
             for (const streamer of streamers) {
                 if (streamer.avatar) {
                     await this.databaseService.updateStreamerAvatar(streamer.login, streamer.avatar);
@@ -29,7 +27,7 @@ export class TwitchController {
 
     public getLiveStreamers = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
         try {
-            const allStreamers = await this.twitchService.getStreamersInfo(this.streamersToCheck);
+            const allStreamers = await this.twitchService.getStreamersInfo(await this.databaseService.getStreamerLogins());
             const liveStreamers = allStreamers.filter(streamer => streamer.isLive);
             liveStreamers.sort((a, b) => (b.viewers || 0) - (a.viewers || 0));
             res.status(200).json(liveStreamers);
@@ -38,8 +36,8 @@ export class TwitchController {
         }
     };
 
-    public getStreamersFromConfig = (req: Request, res: Response): void => {
-        res.status(200).json({ streamers_from_config: this.streamersToCheck });
+    public getStreamersFromConfig = async (req: Request, res: Response): Promise<void> => {
+        res.status(200).json({ streamers_from_config: await this.databaseService.getStreamerLogins() });
     };
 
     public getStreamer = async (req: Request, res: Response, next: NextFunction): Promise<void> => {

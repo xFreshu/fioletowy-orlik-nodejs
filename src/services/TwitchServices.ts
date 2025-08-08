@@ -82,12 +82,12 @@ export class TwitchService {
 
                 const batchStreamerInfo = users.map(user => {
                     const stream = streamsMap.get(user.login.toLowerCase());
-                    const platform: "twitch" | "kick" = stream ? 'twitch' : 'kick';
-                    const platformUrl = stream ? 'www.twitch.tv' : 'www.kick.com';
+                    const platform: "twitch" = 'twitch';
+                    const platformUrl = 'www.twitch.tv';
                     return {
                         displayName: user.display_name,
                         login: user.login,
-                        avatar: user.avatar,
+                        avatar: user.profile_image_url,
                         isLive: !!stream,
                         viewers: stream ? stream.viewer_count : null,
                         title: stream ? stream.title : null,
