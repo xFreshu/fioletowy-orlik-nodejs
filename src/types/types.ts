@@ -52,6 +52,88 @@ export interface TwitchStreamsResponse {
     };
 }
 
+// ========== KICK API TYPES ==========
+
+export interface KickUser {
+    id: number;
+    user_id: number;
+    slug: string;
+    is_banned: boolean;
+    playback_url: string;
+    name_updated_at: null | string;
+    vod_enabled: boolean;
+    subscription_enabled: boolean;
+    followers_count: number;
+    profile_pic: string;
+}
+
+export interface KickStream {
+    id: number;
+    slug: string;
+    channel_id: number;
+    created_at: string;
+    session_title: string;
+    is_live: boolean;
+    risk_level_id: null | number;
+    start_time: string;
+    source: null | string;
+    twitch_channel: null | string;
+    duration: number;
+    language: string;
+    is_mature: boolean;
+    viewer_count: number;
+    thumbnail: {
+        src: string;
+    };
+    categories: {
+        id: number;
+        category_id: number;
+        name: string;
+        slug: string;
+        tags: string[];
+        description: null | string;
+        deleted_at: null | string;
+        viewers: number;
+        banner: {
+            responsive: string;
+            url: string;
+        };
+    }[];
+    video: {
+        id: number;
+        channel_id: number;
+        livestream_id: number;
+        slug: null | string;
+        thumb: null | string;
+        s3: null | string;
+        duration: number;
+        views: number;
+        video_url: string;
+        created_at: string;
+        updated_at: string;
+    };
+}
+
+export interface KickLivestream {
+    id: number;
+    slug: string;
+    channel_id: number;
+    created_at: string;
+    session_title: string;
+    is_live: boolean;
+    risk_level_id: null | number;
+    start_time: string;
+    source: null | string;
+    twitch_channel: null | string;
+    duration: number;
+    language: string;
+    is_mature: boolean;
+    viewer_count: number;
+    thumbnail: {
+        src: string;
+    };
+}
+
 // ========== APPLICATION TYPES ==========
 
 export interface StreamerInfo {

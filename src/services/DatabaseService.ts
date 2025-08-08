@@ -27,26 +27,28 @@ export class DatabaseService {
         }
     }
 
-    public async getStreamerLogins(): Promise<string[]> {
+    public async getStreamerNames(platform: 'twitch' | 'kick'): Promise<string[]> {
         const tableName = 'streamers'; // The table we are querying
-        logger.info(`Querying table: "${tableName}" in database: "${this.dbConfig.database}"`);
+        const columnName = platform === 'twitch' ? 'TwitchNickname' : 'KickNickname';
+        logger.info(`Querying table: "${tableName}" for platform: ${platform} in database: "${this.dbConfig.database}"`);
         try {
             // The column name is case-sensitive, so we wrap it in double quotes.
-            const result: QueryResult<{ TwitchNickname: string }> = await this.pool.query(
-                `SELECT "TwitchNickname" FROM ${tableName}`
+            const result: QueryResult<{ Nickname: string }> = await this.pool.query(
+                `SELECT "${columnName}" as "Nickname" FROM ${tableName} WHERE "${columnName}" IS NOT NULL`
             );
-            const logins = result.rows.map(row => row.TwitchNickname);
-            logger.info(`Fetched ${logins.length} streamer logins from the database.`);
-            return logins;
+            const names = result.rows.map(row => row.Nickname);
+            logger.info(`Fetched ${names.length} streamer names for ${platform} from the database.`);
+            return names;
         } catch (error) {
             logger.error(`Error querying table "${tableName}".`, error);
             return [];
         }
     }
 
-    public async updateStreamerAvatar(login: string, avatarUrl: string): Promise<void> {
+    public async updateStreamerAvatar(login: string, avatarUrl: string, platform: 'twitch' | 'kick'): Promise<void> {
         const tableName = 'streamers';
-        const query = `UPDATE ${tableName} SET "Avatar" = $1 WHERE LOWER("TwitchNickname") = LOWER($2)`;
+        const columnName = platform === 'twitch' ? 'TwitchNickname' : 'KickNickname';
+        const query = `UPDATE ${tableName} SET "Avatar" = $1 WHERE LOWER("${columnName}") = LOWER($2)`;
         try {
             await this.pool.query(query, [avatarUrl, login]);
             logger.info(`Successfully updated avatar for streamer: ${login}`);
@@ -60,3 +62,5 @@ export class DatabaseService {
         logger.info('Database pool has been closed.');
     }
 }
+
+export default new DatabaseService();

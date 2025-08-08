@@ -3,6 +3,7 @@ import dotenv from 'dotenv';
 import logger from './config/logger.js';
 import { getConfig } from './config/index.js';
 import twitchRoutes from './routes/twitchRoutes.js';
+import kickRoutes from './routes/kickRoutes.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import swaggerUi from 'swagger-ui-express';
 import fs from 'fs';
@@ -37,16 +38,18 @@ function bootstrap() {
         }
     }
 
-    app.use('/api', twitchRoutes);
+    app.use('/api/twitch', twitchRoutes);
+    app.use('/api/kick', kickRoutes);
 
     app.use(errorHandler);
 
     app.listen(PORT, () => {
         console.log('!!! TEST: Serwer nasłuchuje. Kod dotarł do tego miejsca. !!!');
         logger.info(`Server is running on port ${PORT}`);
-        logger.info(`Access all streamer data at http://localhost:${PORT}/api/twitchStreamers`);
-        logger.info(`Access live streamer data at http://localhost:${PORT}/api/liveStreamers`);
-        logger.info(`Verify loaded streamers at http://localhost:${PORT}/api/config/streamers`);
+        logger.info(`Access all Twitch streamer data at http://localhost:${PORT}/api/twitch/streamers`);
+        logger.info(`Access live Twitch streamer data at http://localhost:${PORT}/api/twitch/live-streamers`);
+        logger.info(`Access all Kick streamer data at http://localhost:${PORT}/api/kick/streamers`);
+        logger.info(`Access live Kick streamer data at http://localhost:${PORT}/api/kick/live-streamers`);
     });
 }
 

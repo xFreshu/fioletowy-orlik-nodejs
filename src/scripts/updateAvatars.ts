@@ -11,7 +11,7 @@ const updateAvatars = async () => {
 
     try {
         await databaseService.connect();
-        const streamerLogins = await databaseService.getStreamerLogins();
+        const streamerLogins = await databaseService.getStreamerNames('twitch');
 
         if (streamerLogins.length === 0) {
             logger.info('No streamer logins found in the database.');
@@ -24,7 +24,7 @@ const updateAvatars = async () => {
 
         for (const streamer of streamersInfo) {
             if (streamer.avatar) {
-                await databaseService.updateStreamerAvatar(streamer.login, streamer.avatar);
+                await databaseService.updateStreamerAvatar(streamer.login, streamer.avatar, 'twitch');
             }
         }
 

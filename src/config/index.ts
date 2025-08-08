@@ -9,6 +9,9 @@ interface Config {
         clientId: string;
         clientSecret: string;
     };
+    kick: {
+        apiKey: string;
+    };
     db: {
         host: string;
         port: number;
@@ -27,6 +30,9 @@ export const getConfig = (): Config => {
             clientId: process.env.TWITCH_CLIENT_ID || '',
             clientSecret: process.env.TWITCH_CLIENT_SECRET || '',
         },
+        kick: {
+            apiKey: process.env.KICK_API_KEY || '',
+        },
         db: {
             host: process.env.DB_HOST || 'localhost',
             port: parseInt(process.env.DB_PORT || '5432', 10),
@@ -40,6 +46,11 @@ export const getConfig = (): Config => {
     if (!config.twitch.clientId || !config.twitch.clientSecret) {
         console.error('ERROR: Missing TWITCH_CLIENT_ID or TWITCH_CLIENT_SECRET in your .env file.');
         throw new Error('Twitch client ID and secret must be provided.');
+    }
+
+    if (!config.kick.apiKey) {
+        console.error('ERROR: Missing KICK_API_KEY in your .env file.');
+        throw new Error('Kick API key must be provided.');
     }
 
     if (!config.db.database) {

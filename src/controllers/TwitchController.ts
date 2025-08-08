@@ -13,10 +13,10 @@ export class TwitchController {
 
     public getAllStreamers = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
         try {
-            const streamers = await this.twitchService.getStreamersInfo(await this.databaseService.getStreamerLogins());
+            const streamers = await this.twitchService.getStreamersInfo(await this.databaseService.getStreamerNames('twitch'));
             for (const streamer of streamers) {
                 if (streamer.avatar) {
-                    await this.databaseService.updateStreamerAvatar(streamer.login, streamer.avatar);
+                    await this.databaseService.updateStreamerAvatar(streamer.login, streamer.avatar, 'twitch');
                 }
             }
             res.status(200).json(streamers);
@@ -27,7 +27,7 @@ export class TwitchController {
 
     public getLiveStreamers = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
         try {
-            const allStreamers = await this.twitchService.getStreamersInfo(await this.databaseService.getStreamerLogins());
+            const allStreamers = await this.twitchService.getStreamersInfo(await this.databaseService.getStreamerNames('twitch'));
             const liveStreamers = allStreamers.filter(streamer => streamer.isLive);
             liveStreamers.sort((a, b) => (b.viewers || 0) - (a.viewers || 0));
             res.status(200).json(liveStreamers);
@@ -37,7 +37,7 @@ export class TwitchController {
     };
 
     public getStreamersFromConfig = async (req: Request, res: Response): Promise<void> => {
-        res.status(200).json({ streamers_from_config: await this.databaseService.getStreamerLogins() });
+        res.status(200).json({ streamers_from_config: await this.databaseService.getStreamerNames('twitch') });
     };
 
     public getStreamer = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -53,7 +53,7 @@ export class TwitchController {
 
             if (streamer) {
                 if (streamer.avatar) {
-                    await this.databaseService.updateStreamerAvatar(streamer.login, streamer.avatar);
+                    await this.databaseService.updateStreamerAvatar(streamer.login, streamer.avatar, 'twitch');
                 }
                 res.status(200).json(streamer);
             } else {
